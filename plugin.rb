@@ -54,9 +54,6 @@ def get_link(id, username, hash)
 end
 
 after_initialize do
-
-
-    bot = User.find_by(id: -1)
    
     # Missing Link
     DiscourseEvent.on(:topic_created) do |topic|
@@ -76,7 +73,7 @@ after_initialize do
             if includesReq == false then
 
                 text = "Hello @" + topic.user.username + ", it appears that you did not provide a link to your project. In order to recieve the best help, please edit your topic to contain a link to your project. This may look like " + link + "."
-                post = PostCreator.create(bot,
+                post = PostCreator.create(Discourse.system_user,
                             skip_validations: true,
                             topic_id: topic.id,
                             raw: text 
@@ -94,13 +91,13 @@ after_initialize do
         if post.post_number != 1 && post.user_id != -1 then
 
             # Close Topic Command        
-            raw = post.raw.downcase
-            if raw[0, 13] == "@system close" then
+            raw = post.raw
+            if raw[0, 13].downcase == "@system close" then
                 if post.user.primary_group_id != nil then
                     group = Group.find_by(id: post.user.primary_group_id)
                     if group.name == "Helpers" then
                         topic = Topic.find_by(id: post.topic_id)
-                        topic.update_status("closed", true, bot)
+                        topic.update_status("closed", true, Discourse.system_user, {message: raw[14..raw.length]})
                     end
                 end
             end
