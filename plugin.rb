@@ -1,6 +1,6 @@
 # name: CWHQ-Discourse-Bot
 # about: This plugin adds extra functionality to the @system user on a Discourse forum.
-# version: 1.0
+# version: 1.3
 # author: Qursch
 # url: https://github.com/Qursch/CWHQ-Discourse-Bot
 
@@ -64,6 +64,11 @@ def create_post(topicId, text)
     end
 end
 
+def closeTopic(id, message)
+    topic = Topic.find_by(id: id)               
+    topic.update_status("closed", true, Discourse.system_user, {message: message})
+end
+
 after_initialize do
    
     # Missing Link
@@ -88,22 +93,24 @@ after_initialize do
         end
     end
 
+
     DiscourseEvent.on(:post_created) do |post|
         
         if post.post_number != 1 && post.user_id != -1 then
 
             # Close Topic Command        
             raw = post.raw
+            oPost = Post.find_by(topic_id: post.topic_id, post_number: 1)
+
             if raw[0, 13].downcase == "@system close" then
-                if post.user.primary_group_id != nil then
-                    group = Group.find_by(id: post.user.primary_group_id)
-                    if group.name == "Helpers" then
-                        topic = Topic.find_by(id: post.topic_id)
-                        topic.update_status("closed", true, Discourse.system_user, {message: raw[14..raw.length]})
-                    end
-                end
+                
+                group = Group.find_by(id: post.user.primary_group_id)
+                topic = post.topic
+                id = topic.category_id
+                if (!post.user.primary_group_id.nil? && group.name = "Helpers") || (oPost.user.name == post.user.name and not hash[id].nil?) then
+                    closeTopic(post.topic_id, raw[14..raw.length])
+                end  
             end
         end
     end
-        
 end
