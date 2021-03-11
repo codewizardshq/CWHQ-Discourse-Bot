@@ -38,8 +38,8 @@ courses = {
     60 => "h32",
     61 => "h33",
     62 => "h34",
-    11 => nil,
-    57 => nil
+    11 => false,
+    57 => false
 }
 
 def get_link(id, username, hash)
@@ -107,7 +107,7 @@ after_initialize do
                 group = Group.find_by(id: post.user.primary_group_id)
                 topic = post.topic
                 id = topic.category_id
-                if (!post.user.primary_group_id.nil? && group.name = "Helpers") || (oPost.user.name == post.user.name and not hash[id].nil?) then
+                if (!post.user.primary_group_id.nil? && group.name = "Helpers") || (oPost.user.name == post.user.name && !hash[id].nil?) then
                     closeTopic(post.topic_id, raw[14..raw.length])
                 end  
             end
