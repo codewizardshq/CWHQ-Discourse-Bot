@@ -1,6 +1,6 @@
 # name: CWHQ-Discourse-Bot
 # about: This plugin adds extra functionality to the @system user on a Discourse forum.
-# version: 1.8.0
+# version: 1.9.0
 # authors: Qursch, bronze0202, linuxmasters, sep208
 # url: https://github.com/codewizardshq/CWHQ-Discourse-Bot
 
@@ -93,6 +93,11 @@ def send_pm(title, text, user)
         skip_validations: true
     )
 end
+def log_command(user, command, text, link)
+    text = "@" + user + command + "<br>" + "`#{text}" + "<br>" + link
+    log_topic = 1
+    create_post(log_topic, text)
+end
 after_initialize do
    
 
@@ -124,6 +129,8 @@ after_initialize do
         end
     end
 
+
+# command check
     DiscourseEvent.on(:post_created) do |post|
         if post.post_number != 1 && post.user_id != -1 then
             raw = post.raw
@@ -138,7 +145,11 @@ after_initialize do
             [System Documentation](https://forum.codewizardshq.com/t/system-add-on-plugin-documentation/8742)
             [Understanding Trust Levels](https://blog.discourse.org/2018/06/understanding-discourse-trust-levels/)
             [Forum Information Category](https://forum.codewizardshq.com/c/official/information/69)"
+            command = 0
+            user = post.user.username
+            link = "https://forum.codewizardshq.com/t/#{post.topic_slug}/#{post.topic_id}"
             if raw[0, 7].downcase == "@system" then
+
                 if raw[8, 5] == "close" then
                     if (!post.user.primary_group_id.nil? && group.name == "Helpers") || (oPost.user.username == post.user.username && !courses[post.topic.category_id].nil?) then
                         text = "Closed by @" + post.user.username + ": " + raw[14..raw.length]
@@ -147,7 +158,10 @@ after_initialize do
                         end
                         closeTopic(post.topic_id, text)
                         PostDestroyer.new(Discourse.system_user, post).destroy
+                        command = `closed topic: "#{post.topic_slug}"(#{post.topic_id})`
                     end
+
+
                 elsif raw[8, 6] == "remove" then
                     if (!post.user.primary_group_id.nil? && group.name == "Helpers") then
                         first_reply = Post.find_by(topic_id: post.topic_id, post_number: 2)
@@ -159,11 +173,16 @@ after_initialize do
                             PostDestroyer.new(Discourse.system_user, second_reply).destroy
                         end
                         PostDestroyer.new(Discourse.system_user, post).destroy
+                        command = "removed system message(s)"
                       end
+
+                      
                 elsif raw[8, 4] == "help" && raw[13] != "@" then
                   text = "Hello @" + post.user.username + ". Here are some resources to help you on the forum:" + helpLinks
-                  
+                  command = "sent public help"
                   create_post(post.topic_id, text)
+
+
                 elsif raw[8,4] == "help" && raw[13] == "@" then
                     if post.user.trust_level >= TrustLevel[3] then
                         for i in 1..raw.length
@@ -172,12 +191,14 @@ after_initialize do
                                 helper = post.user
                                 title = "Help with the CodeWizardsHQ Forum"
                                 raw = "Hello @" + helpUser.username + ", @" + helper.username + " thinks you might need some help gettting around the forum. Here are some resources that you can read if you would like to know more about this forum:" + helpLinks +  "<br> <br>This message was sent using the [@system help command](https://forum.codewizardshq.com/t/system-add-on-plugin-documentation/8742)." 
+                                command = "sent private help to @#{helpuser.username}"
                                 send_pm(title, raw, helpUser.username)
                                 PostDestroyer.new(Discourse.system_user, post).destroy
                                 break
                             end
                         end
-                    end   
+                    end
+
                 end
             elsif post.user.username == oPost.user.username && !courses[post.topic.category_id].nil? then
                 phrases = ["homework help", "on my own", "thanks", "thank you", "figured it out", "it works", "it's working", "myself", "solved", "fixed"]
@@ -185,13 +206,19 @@ after_initialize do
                     if raw.downcase.include?(i) then
                         text = "Hello @#{post.user.username}. Based on your last reply, it seems like the issue you needed help with has been solved. If you would like to close the topic, meaning there will be no more replies allowed, follow the instructions below. If your problem is not solved or you would like to leave the topic open, you may ignore this or submit feedback [here](https://forum.codewizardshq.com/t/bot-commands-and-pr-suggestions-for-system/9254).<br><br>To close your topic, navigate back to your topic (the easiest way to do this is to press the back button to take you the last page you were on). Then make a new reply, and in it type `@system close problem solved`. If you need to, you can replace `problem solved` with a diferent reason for closing. When you post your reply, the topic should close."
                         title = "Do you want to close your get help topic?"
+                        command = "was sent a topic closing message"
                         send_pm(title, text, post.user.username)
                         break
                     end
                 end
             end
+            if command != 0 then
+                log_command(user, command, raw, link)
+            end
         end
     end
+
+
     DiscourseEvent.on(:post_edited) do |post|
         if post.post_number == 1 && check_all_link_types(post.raw) then
             first_reply = Post.find_by(topic_id: post.topic_id, post_number: 2)
