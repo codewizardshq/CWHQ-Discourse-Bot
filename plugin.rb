@@ -96,7 +96,7 @@ end
 def log_command(user, command, text, link)
     text = "@" + user + command + "<br>" + "`#{text}" + "<br>" + link
     log_topic = 1
-    create_post(log_topic, text)
+    create_post(SiteSetting.log_topic_id, text)
 end
 after_initialize do
    
