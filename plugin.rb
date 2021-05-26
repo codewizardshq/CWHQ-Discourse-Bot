@@ -130,7 +130,6 @@ after_initialize do
     end
 
 
-# command check
     DiscourseEvent.on(:post_created) do |post|
         if post.post_number != 1 && post.user_id != -1 then
             raw = post.raw
@@ -149,7 +148,6 @@ after_initialize do
             user = post.user.username
             link = "https://forum.codewizardshq.com/t/#{post.topic_slug}/#{post.topic_id}"
             if raw[0, 7].downcase == "@system" then
-
                 if raw[8, 5] == "close" then
                     if (!post.user.primary_group_id.nil? && group.name == "Helpers") || (oPost.user.username == post.user.username && !courses[post.topic.category_id].nil?) then
                         text = "Closed by @" + post.user.username + ": " + raw[14..raw.length]
@@ -160,8 +158,6 @@ after_initialize do
                         PostDestroyer.new(Discourse.system_user, post).destroy
                         command = `closed topic: "#{post.topic_slug}"(#{post.topic_id})`
                     end
-
-
                 elsif raw[8, 6] == "remove" then
                     if (!post.user.primary_group_id.nil? && group.name == "Helpers") then
                         first_reply = Post.find_by(topic_id: post.topic_id, post_number: 2)
@@ -174,15 +170,11 @@ after_initialize do
                         end
                         PostDestroyer.new(Discourse.system_user, post).destroy
                         command = "removed system message(s)"
-                      end
-
-                      
+                      end  
                 elsif raw[8, 4] == "help" && raw[13] != "@" then
                   text = "Hello @" + post.user.username + ". Here are some resources to help you on the forum:" + helpLinks
                   command = "sent public help"
                   create_post(post.topic_id, text)
-
-
                 elsif raw[8,4] == "help" && raw[13] == "@" then
                     if post.user.trust_level >= TrustLevel[3] then
                         for i in 1..raw.length
@@ -198,7 +190,6 @@ after_initialize do
                             end
                         end
                     end
-
                 end
             elsif post.user.username == oPost.user.username && !courses[post.topic.category_id].nil? then
                 phrases = ["homework help", "on my own", "thanks", "thank you", "figured it out", "it works", "it's working", "myself", "solved", "fixed"]
@@ -217,8 +208,6 @@ after_initialize do
             end
         end
     end
-
-
     DiscourseEvent.on(:post_edited) do |post|
         if post.post_number == 1 && check_all_link_types(post.raw) then
             first_reply = Post.find_by(topic_id: post.topic_id, post_number: 2)
