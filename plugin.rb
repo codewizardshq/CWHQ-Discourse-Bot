@@ -95,7 +95,7 @@ def send_pm(title, text, user)
 end
 def log_command(user, command, text, link)
     text = "@" + user + command + "<br>" + "`#{text}" + "<br>" + link
-    log_topic = 1
+    
     create_post(SiteSetting.log_topic_id, text)
 end
 after_initialize do
@@ -155,8 +155,8 @@ after_initialize do
                             text = "Closed by topic creator: " + raw[14..raw.length]
                         end
                         closeTopic(post.topic_id, text)
+                        command = "closed topic:" + post.topic_id
                         PostDestroyer.new(Discourse.system_user, post).destroy
-                        command = `closed topic: "#{post.topic_slug}"(#{post.topic_id})`
                     end
                 elsif raw[8, 6] == "remove" then
                     if (!post.user.primary_group_id.nil? && group.name == "Helpers") then
@@ -168,9 +168,9 @@ after_initialize do
                         if !second_reply.nil? && second_reply.user.username == "system" then
                             PostDestroyer.new(Discourse.system_user, second_reply).destroy
                         end
-                        PostDestroyer.new(Discourse.system_user, post).destroy
                         command = "removed system message(s)"
-                      end  
+                        PostDestroyer.new(Discourse.system_user, post).destroy                      
+                    end  
                 elsif raw[8, 4] == "help" && raw[13] != "@" then
                   text = "Hello @" + post.user.username + ". Here are some resources to help you on the forum:" + helpLinks
                   command = "sent public help"
