@@ -2,7 +2,7 @@ plugins:
   bot_enabled:
     default: true
     client: true
-  log_topic_id:
+  bot_log_topic_id:
     default: 0
     client: false
     
