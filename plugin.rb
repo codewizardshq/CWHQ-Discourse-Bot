@@ -4,6 +4,8 @@
 # authors: Qursch, bronze0202, linuxmasters, sep208
 # url: https://github.com/codewizardshq/CWHQ-Discourse-Bot
 
+enabled_site_setting :bot_enabled
+
 require 'date'
 
 courses = Hash.new
